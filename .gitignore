@@ -1,0 +1,16 @@
+# Binaries
+bin/
+*.exe
+
+# Test artifacts
+coverage.out
+*.test
+
+# Environment
+.env
+*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
