@@ -35,6 +35,9 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Install sqlc
+        run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+
       - name: Generate sqlc code
         run: make sqlc
         shell: bash
