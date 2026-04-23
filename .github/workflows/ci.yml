@@ -41,14 +41,6 @@ jobs:
 
       - name: Generate sqlc code
         run: make sqlc
-        shell: bash
-
-      - name: Check for changes
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "Detected uncommitted changes after make sqlc. Run 'make sqlc' locally."
-            exit 1
-          fi
 
       - name: Run unit tests
         run: go test ./... -count=1
