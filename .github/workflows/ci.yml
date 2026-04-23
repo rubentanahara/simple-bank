@@ -1,13 +1,16 @@
-name: Run unit tests
+name: CI
+
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
+  workflow_dispatch:
+
 jobs:
   test:
-    name: Test
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:12-alpine
@@ -15,24 +18,53 @@ jobs:
           POSTGRES_USER: postgres-user
           POSTGRES_PASSWORD: postgres-password
           POSTGRES_DB: simple_bank
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
         ports:
           - 5432:5432
-        options: >-
-          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
         with:
-          go-version: ^1.22
-        id: go
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-      - name: Install golang-migrate
+          go-version: '1.26'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Install sqlc
+        run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+
+      - name: Generate sqlc code
+        run: make sqlc
+        shell: bash
+
+      - name: Check for changes
         run: |
-          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.14.1/migrate.linux-amd64.tar.gz | tar xvz
-          sudo mv migrate.linux-amd64 /usr/bin/migrate
-          which migrate
-      - name: Run migrations
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Detected uncommitted changes after make sqlc. Run 'make sqlc' locally."
+            exit 1
+          fi
+
+      - name: Run unit tests
+        run: go test ./... -count=1
+
+      - name: Run tests with race detector
+        run: go test -race ./... -count=1
+
+      - name: Apply migrations
+        env:
+          POSTGRES_USER: postgres-user
+          POSTGRES_PASSWORD: postgres-password
         run: make db-up
-      - name: Test
-        run: make test
+        shell: bash
+
+      - name: Run integration tests
+        run: make test-integration
+
+      - name: Run coverage
+        run: make cover

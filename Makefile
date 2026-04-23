@@ -35,9 +35,6 @@ test: ## Run all unit tests (no live DB required)
 test-integration: ## Run sqlc integration tests (requires postgres-start + db-up)
 	go test ./internal/repository/sqlc/... -v -count=1
 
-test/pkg/%: ## Run a single test by name in a package: make test/pkg/usecase RUN=TestFoo
-	go test -v -count=1 -run $(RUN) ./internal/$*/...
-
 test-race: ## Run all tests with the data-race detector
 	go test -race ./... -count=1
 
