@@ -28,15 +28,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
 
       - name: Download dependencies
         run: go mod download
 
-      - name: Run sqlc generate
+      - name: Generate sqlc code
         run: make sqlc
         shell: bash
 
@@ -53,11 +52,11 @@ jobs:
       - name: Run tests with race detector
         run: go test -race ./... -count=1
 
-      - name: Apply migrations
-        run: make db-up
+      - name: Run migrations
         env:
           POSTGRES_USER: postgres-user
           POSTGRES_PASSWORD: postgres-password
+        run: make db-up
         shell: bash
 
       - name: Run integration tests
@@ -65,3 +64,4 @@ jobs:
 
       - name: Run coverage
         run: make cover
+
